@@ -8,15 +8,12 @@ else
 	APPDIR="/home/app"
 fi
 #
-#LIBDIR=$HOME/src/java/lib
 LIBDIR=$APPDIR/lib
 CLASSPATH=$LIBDIR/unm_biocomp_hf.jar
 CLASSPATH=$CLASSPATH:$LIBDIR/unm_biocomp_db.jar
 CLASSPATH=$CLASSPATH:$LIBDIR/unm_biocomp_util.jar
 #
-LIBDIR=$APPDIR/lib
 #CLASSPATH="$CLASSPATH:$LIBDIR/jtds-1.3.1.jar"
-#CLASSPATH="$CLASSPATH:$LIBDIR/postgresql-9.2-1004.jdbc41.jar"
 CLASSPATH="$CLASSPATH:$LIBDIR/postgresql-9.4.1208.jre6.jar"
 #
 DBHOST="hsc-ctschf.health.unm.edu"
