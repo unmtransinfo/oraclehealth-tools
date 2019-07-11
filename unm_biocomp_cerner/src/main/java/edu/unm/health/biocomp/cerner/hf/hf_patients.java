@@ -1,12 +1,12 @@
-package edu.unm.health.biocomp.hf;
+package edu.unm.health.biocomp.cerner.hf;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.sql.*;
 
-import edu.unm.health.biocomp.db.*;
 import edu.unm.health.biocomp.util.*;
+import edu.unm.health.biocomp.util.db.*;
 
 /**	HealthFacts patient facts app.  See online help.
 
@@ -14,13 +14,6 @@ import edu.unm.health.biocomp.util.*;
 */
 public class hf_patients
 {
-  /////////////////////////////////////////////////////////////////////////////
-  //MS-SqlServer:
-  //private static String DBHOST="hsc-ctscvs5.health.unm.edu";
-  //private static String DBNAME="HealthFacts";
-  //private static String DBDOMAIN="HEALTH";
-  //private static Integer DBPORT=1433;
-
   //Postgresql (via tunnel):
   private static String DBHOST="localhost";
   private static String DBNAME="healthfacts";

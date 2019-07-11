@@ -1,15 +1,14 @@
-package edu.unm.health.biocomp.hf;
+package edu.unm.health.biocomp.cerner.hf;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 import java.sql.*;
 
-import edu.unm.health.biocomp.db.*;
 import edu.unm.health.biocomp.util.*;
+import edu.unm.health.biocomp.util.db.*; //DBCon
 
 /**	HealthFacts utils, static methods.
-
 	@author Jeremy J Yang
 */
 public class hf_utils
