@@ -1,24 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 #
-if [ "`uname -s`" = "Darwin" ]; then
-	APPDIR="/Users/app"
-elif [ "`uname -s`" = "Linux" ]; then
-	APPDIR="/home/app"
-else
-	APPDIR="/home/app"
-fi
 #
-LIBDIR=$APPDIR/lib
-CLASSPATH=$LIBDIR/unm_biocomp_hf.jar
-CLASSPATH=$CLASSPATH:$LIBDIR/unm_biocomp_db.jar
-CLASSPATH=$CLASSPATH:$LIBDIR/unm_biocomp_util.jar
+# Define DBHOST, DBPORT, TUNNELPORT
+. ~/.healthfactsrc
 #
-CLASSPATH="$CLASSPATH:$LIBDIR/postgresql-9.4.1208.jre6.jar"
+printf "DBHOST = %s; DBPORT = %s; TUNNELPORT = %s\n" "${DBHOST}" "${DBPORT}" "${TUNNELPORT}"
 #
-DBHOST="hsc-ctschf.health.unm.edu"
-DBPORT="5432"
-#
-TUNNELPORT="63333"
 #
 ssh -T -O "check" $DBHOST
 rval="$?"
@@ -27,7 +14,7 @@ if [ "$rval" -ne 0 ]; then
 	ssh -f -N -T -M -4 -L ${TUNNELPORT}:localhost:${DBPORT} $DBHOST
 fi
 #
-java ${JAVA_OPTS} -classpath $CLASSPATH edu.unm.health.biocomp.hf.hf_patients $*
+(cd unm_biocomp_cerner ; mvn exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_patients" -Dexec.args="$*")
 #
 #ssh -T -O "exit" $DBHOST
 #

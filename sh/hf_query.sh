@@ -1,25 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 #
-if [ "`uname -s`" = "Darwin" ]; then
-	APPDIR="/Users/app"
-elif [ "`uname -s`" = "Linux" ]; then
-	APPDIR="/home/app"
-else
-	APPDIR="/home/app"
-fi
 #
-LIBDIR=$APPDIR/lib
-CLASSPATH=$LIBDIR/unm_biocomp_hf.jar
-CLASSPATH=$CLASSPATH:$LIBDIR/unm_biocomp_db.jar
-CLASSPATH=$CLASSPATH:$LIBDIR/unm_biocomp_util.jar
+# Define DBNAME, DBHOST, DBPORT, TUNNELPORT
+. ~/.healthfactsrc
 #
-#CLASSPATH="$CLASSPATH:$LIBDIR/jtds-1.3.1.jar"
-CLASSPATH="$CLASSPATH:$LIBDIR/postgresql-9.4.1208.jre6.jar"
-#
-DBHOST="hsc-ctschf.health.unm.edu"
-DBPORT="5432"
-#
-TUNNELPORT="63333"
 #
 help() {
 	echo "$1"
@@ -34,6 +18,7 @@ help() {
 	echo "        -q QUERY ........ SQL"
 	echo ""
 	echo "  parameters:"
+	echo "        -n NAME ......... db host [$DBNAME]"
 	echo "        -h HOST ......... db host [$DBHOST]"
 	echo "        -p PORT ......... db port [$DBPORT]"
 	echo "        -t TUNNELPORT ... ssh tunnel port [$TUNNELPORT]"
@@ -55,10 +40,11 @@ elif [ ! "$DBHOST" ]; then
 fi
 #
 ### Parse options
-while getopts "f:q:h:p:t:o:iv" opt ; do
+while getopts "f:q:h:p:n:t:o:iv" opt ; do
 	case "$opt" in
 	  f)      SQLFILE="$OPTARG" ;;
 	  q)      SQL="$OPTARG" ;;
+	  n)      DBNAME="$OPTARG" ;;
 	  h)      DBHOST="$OPTARG" ;;
 	  z)      DBPORT="$OPTARG" ;;
 	  t)      TUNNELPORT="$OPTARG" ;;
@@ -75,39 +61,39 @@ if [ $OP = "query" -a ! "$SQL" -a ! "$SQLFILE" ]; then
 	help
 fi
 #
-cmd="java ${JAVA_OPTS} -classpath $CLASSPATH \
-	edu.unm.health.biocomp.hf.hf_query \
-	-dbhost localhost \
-	-dbport $TUNNELPORT"
+args="-dbhost localhost -dbport $TUNNELPORT -dbname $DBNAME"
 #
 if [ "$VERBOSE" ]; then
-	cmd="$cmd -v"
+	args="$args -v"
 fi
 ###
 ssh -T -O "check" $DBHOST
 rval="$?"
 #
+# In "psql --host=/tmp" "/tmp" is used as the directory for the Unix-domain socket.
 if [ "$rval" -ne 0 ]; then
-	ssh -f -N -T -M -4 -L ${TUNNELPORT}:localhost:${DBPORT} $DBHOST
+	ssh -f -N -T -M -4 -L ${TUNNELPORT}:/tmp:${DBPORT} $DBHOST
 fi
 #
 if [ $OP = "info" ]; then
-	cmd="$cmd -info"
+	args="$args -info"
 elif [ $OP = "query" ]; then
-	cmd="$cmd -query"
+	args="$args -query"
 	if [ "$SQLFILE" ]; then
-		cmd="$cmd -sqlfile $SQLFILE"
+		args="$args -sqlfile $SQLFILE"
 	elif [ "$SQL" ]; then
-		cmd="$cmd -sql \"$SQL\""
+		args="$args -sql \"$SQL\""
 	fi
 	if [ "$OFILE" ]; then
-		cmd="$cmd -o $OFILE"
+		args="$args -o $OFILE"
 	fi
 fi
 #
 set -x
 #
-$cmd
+mvn --projects unm_biocomp_cerner exec:java  \
+	-Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_query" \
+	-Dexec.args="${args}"
 #
 #ssh -T -O "exit" $DBHOST
 #
