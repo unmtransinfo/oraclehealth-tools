@@ -21,7 +21,7 @@ JOIN
 JOIN
         hf_d_diagnosis dd ON fd1.diagnosis_id = dd.diagnosis_id
 WHERE
-	EXTRACT(YEAR FROM fe.admitted_dt_tm) BETWEEN 2008 AND 2017
+	EXTRACT(YEAR FROM fe.admitted_dt_tm) BETWEEN 2013 AND 2017
 	AND dd.diagnosis_id IN
 	( SELECT
 		diagnosis_id
@@ -32,5 +32,6 @@ WHERE
 		AND NOT (diagnosis_type = 'ICD9' AND (diagnosis_code ~ '^[EOV]' OR diagnosis_code ~ '^(866|996)' ))
 		AND NOT (diagnosis_type = 'ICD10-CM' AND diagnosis_code ~ '^[EORSTZ]')
 	)
+	AND RANDOM() < 0.01
 	;
 --

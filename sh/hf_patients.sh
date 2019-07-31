@@ -1,11 +1,10 @@
 #!/bin/bash
 #
 #
-# Define DBHOST, DBPORT, TUNNELPORT
+# Define DBNAME, DBHOST, DBPORT, TUNNELPORT
 . ~/.healthfactsrc
 #
-printf "DBHOST = %s; DBPORT = %s; TUNNELPORT = %s\n" "${DBHOST}" "${DBPORT}" "${TUNNELPORT}"
-#
+printf "DBNAME = %s; DBHOST = %s; DBPORT = %s; TUNNELPORT = %s\n" "${DBNAME}" "${DBHOST}" "${DBPORT}" "${TUNNELPORT}"
 #
 ssh -T -O "check" $DBHOST
 rval="$?"
@@ -14,7 +13,7 @@ if [ "$rval" -ne 0 ]; then
 	ssh -f -N -T -M -4 -L ${TUNNELPORT}:localhost:${DBPORT} $DBHOST
 fi
 #
-(cd unm_biocomp_cerner ; mvn exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_patients" -Dexec.args="$*")
+mvn --projects unm_biocomp_cerner exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_patients" -Dexec.args="-dbname $DBNAME $*"
 #
 #ssh -T -O "exit" $DBHOST
 #

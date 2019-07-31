@@ -70,13 +70,13 @@ fi
 ssh -T -O "check" $DBHOST
 rval="$?"
 #
-# In "psql --host=/tmp" "/tmp" is used as the directory for the Unix-domain socket.
 if [ "$rval" -ne 0 ]; then
-	ssh -f -N -T -M -4 -L ${TUNNELPORT}:/tmp:${DBPORT} $DBHOST
+	ssh -f -N -T -M -4 -L ${TUNNELPORT}:localhost:${DBPORT} $DBHOST
 fi
 #
 if [ $OP = "info" ]; then
-	args="$args -info"
+	#args="$args -info"
+	args="$args -list_tables"
 elif [ $OP = "query" ]; then
 	args="$args -query"
 	if [ "$SQLFILE" ]; then

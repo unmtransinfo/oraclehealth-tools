@@ -11,7 +11,8 @@ mvn clean install
 # Usage
 
 ```
-mvn exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_query"
+mvn --projects unm_biocomp_cerner exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_query"
+mvn --projects unm_biocomp_cerner exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_patients"
 ```
 
 # Documentation

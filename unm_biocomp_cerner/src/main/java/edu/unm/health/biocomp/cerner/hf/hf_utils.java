@@ -48,7 +48,7 @@ public class hf_utils
     return tbls;
   }
   /////////////////////////////////////////////////////////////////////////////
-  public static void Rset2Csv(ResultSet rset,OutputStream ostream,int verbose)
+  public static void Rset2Csv(ResultSet rset, OutputStream ostream, int verbose)
         throws SQLException
   {
     PrintWriter fout_writer=new PrintWriter(new OutputStreamWriter(ostream));
@@ -80,7 +80,7 @@ public class hf_utils
   /**
 	@return	numerically ordered list of patient_sk IDs.
   */
-  public static List<Long> GetPatientSkList(DBCon dbcon,boolean random, int nmax)
+  public static List<Long> GetPatientSkList(DBCon dbcon, boolean random, Integer nmax)
         throws SQLException
   {
     ArrayList<Long> sks = new ArrayList<Long>();
@@ -89,7 +89,7 @@ public class hf_utils
       sql="SELECT patient_sk,RANDOM() FROM hf_d_patient ORDER BY RANDOM()";
     else
       sql="SELECT patient_sk FROM hf_d_patient ORDER BY patient_sk";
-    sql+=" LIMIT "+nmax;
+    if (nmax!=null) sql+=" LIMIT "+nmax;
     ResultSet rset=dbcon.executeSql(sql);
     while (rset.next())
     {
@@ -101,7 +101,7 @@ public class hf_utils
   /////////////////////////////////////////////////////////////////////////////
   /**	Should be only one Sk, right?
   */
-  public static Long Pid2Sk(DBCon dbcon,Long pid)
+  public static Long Pid2Sk(DBCon dbcon, Long pid)
         throws SQLException
   {
     String sql="SELECT DISTINCT patient_sk FROM hf_d_patient WHERE patient_id = "+pid;
@@ -112,7 +112,7 @@ public class hf_utils
     return sk;
   }
   /////////////////////////////////////////////////////////////////////////////
-  public static Patient GetPatient(DBCon dbcon,long sk)
+  public static Patient GetPatient(DBCon dbcon, long sk)
         throws SQLException
   {
     Patient p = new Patient(sk);
@@ -141,8 +141,7 @@ public class hf_utils
   /////////////////////////////////////////////////////////////////////////////
   /**	Find facts by type, write counts to output file.
   */
-  public static void PatientFacts(DBCon dbcon,List<Long> sks,int ftype,int nmax,int skip,
-	OutputStream ostream,int verbose)
+  public static void PatientFacts(DBCon dbcon, List<Long> sks, int ftype, Integer nmax, int skip, OutputStream ostream, int verbose)
         throws SQLException
   {
     PrintWriter fout_writer=new PrintWriter(new OutputStreamWriter(ostream));
@@ -198,7 +197,7 @@ public class hf_utils
       //plist.add(p);
       if (verbose>2)
         System.err.println("\tt_this: "+time_utils.TimeDeltaStr(t_0_this,new java.util.Date()));
-      if (++n_sk>=nmax) break;
+      if (nmax!=null && ++n_sk>=nmax) break;
       if (verbose>1 && n_sk%1000==0)
       {
         System.err.println("i_sk = "+i_sk+" / "+sks.size()+" ; runtime: "+time_utils.TimeDeltaStr(t_0,new java.util.Date()));
@@ -244,26 +243,26 @@ public class hf_utils
   /////////////////////////////////////////////////////////////////////////////
   /**	Find all facts associated with specified patient IDs.
   */
-  public static int AddFacts(DBCon dbcon,int ftype,List<Long> pids,FactList flist,int verbose)
+  public static int AddFacts(DBCon dbcon, int ftype, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     int n_fact=0;
     if (ftype==Fact.TYPE_DIAGNOSIS || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsDiagnosis(dbcon,pids,flist,verbose);
+      n_fact += AddFactsDiagnosis(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_MEDICATION || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsMedication(dbcon,pids,flist,verbose);
+      n_fact += AddFactsMedication(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_MED_HISTORY || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsMedHistory(dbcon,pids,flist,verbose);
+      n_fact += AddFactsMedHistory(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_LAB_PROCEDURE || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsLab(dbcon,pids,flist,verbose);
+      n_fact += AddFactsLab(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_SURGICAL_PROCEDURE || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsSurgery(dbcon,pids,flist,verbose);
+      n_fact += AddFactsSurgery(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_PROCEDURE || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsProcedure(dbcon,pids,flist,verbose);
+      n_fact += AddFactsProcedure(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_CLINICAL_EVENT || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsClinicalEvent(dbcon,pids,flist,verbose);
+      n_fact += AddFactsClinicalEvent(dbcon, pids, flist, verbose);
     if (ftype==Fact.TYPE_DISCHARGE || ftype==Fact.TYPE_ALL) 
-      n_fact += AddFactsDischarge(dbcon,pids,flist,verbose);
+      n_fact += AddFactsDischarge(dbcon, pids, flist, verbose);
 
     Collections.sort(flist); //default sort by date
     return n_fact;
@@ -271,7 +270,7 @@ public class hf_utils
   /////////////////////////////////////////////////////////////////////////////
   /**	Find all diagnosis facts associated with specified patient IDs.
   */
-  public static int AddFactsDiagnosis(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsDiagnosis(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -309,7 +308,7 @@ public class hf_utils
     while (rset.next())
     {
       java.util.Date date = rset.getDate("date");
-      Fact f = new Fact(date,Fact.TYPE_DIAGNOSIS);
+      Fact f = new Fact(date, Fact.TYPE_DIAGNOSIS);
       f.setEncounterId(rset.getLong("encounter_id"));
       f.setPatientId(rset.getLong("patient_id"));
       f.setPatientTypeId(rset.getShort("patient_type_id"));
@@ -325,7 +324,7 @@ public class hf_utils
   /////////////////////////////////////////////////////////////////////////////
   /**	Find all medication facts associated with specified patient IDs.
   */
-  public static int AddFactsMedication(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsMedication(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -372,7 +371,7 @@ public class hf_utils
   /////////////////////////////////////////////////////////////////////////////
   /**	Find all medication history facts associated with specified patient IDs.
   */
-  public static int AddFactsMedHistory(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsMedHistory(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -404,7 +403,7 @@ public class hf_utils
     while (rset.next())
     {
       java.util.Date date = rset.getDate("date");
-      Fact f = new Fact(date,Fact.TYPE_MEDICATION);
+      Fact f = new Fact(date, Fact.TYPE_MEDICATION);
       f.setEncounterId(rset.getLong("encounter_id"));
       f.setPatientId(rset.getLong("patient_id"));
       f.setPatientTypeId(rset.getShort("patient_type_id"));
@@ -421,7 +420,7 @@ public class hf_utils
   /**	Find all lab facts associated with specified patient IDs.
 	Slow!  93min for one pid, Jan 2016.
   */
-  public static int AddFactsLab(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsLab(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -460,7 +459,7 @@ public class hf_utils
     while (rset.next())
     {
       java.util.Date date = rset.getDate("date");
-      Fact f = new Fact(date,Fact.TYPE_LAB_PROCEDURE);
+      Fact f = new Fact(date, Fact.TYPE_LAB_PROCEDURE);
       f.setEncounterId(rset.getLong("encounter_id"));
       f.setPatientId(rset.getLong("patient_id"));
       f.setPatientTypeId(rset.getShort("patient_type_id"));
@@ -476,7 +475,7 @@ public class hf_utils
     return n_fact;
   }
   /////////////////////////////////////////////////////////////////////////////
-  public static int AddFactsClinicalEvent(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsClinicalEvent(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -513,7 +512,7 @@ public class hf_utils
     while (rset.next())
     {
       java.util.Date date = rset.getDate("date");
-      Fact f = new Fact(date,Fact.TYPE_CLINICAL_EVENT);
+      Fact f = new Fact(date, Fact.TYPE_CLINICAL_EVENT);
       f.setEncounterId(rset.getLong("encounter_id"));
       f.setPatientId(rset.getLong("patient_id"));
       f.setPatientTypeId(rset.getShort("patient_type_id"));
@@ -529,7 +528,7 @@ public class hf_utils
     return n_fact;
   }
   /////////////////////////////////////////////////////////////////////////////
-  public static int AddFactsSurgery(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsSurgery(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -574,7 +573,7 @@ public class hf_utils
     return n_fact;
   }
   /////////////////////////////////////////////////////////////////////////////
-  public static int AddFactsProcedure(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsProcedure(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -604,7 +603,7 @@ public class hf_utils
     while (rset.next())
     {
       java.util.Date date = rset.getDate("date");
-      Fact f = new Fact(date,Fact.TYPE_SURGICAL_PROCEDURE);
+      Fact f = new Fact(date, Fact.TYPE_SURGICAL_PROCEDURE);
       f.setEncounterId(rset.getLong("encounter_id"));
       f.setPatientId(rset.getLong("patient_id"));
       f.setPatientTypeId(rset.getShort("patient_type_id"));
@@ -618,7 +617,7 @@ public class hf_utils
     return n_fact;
   }
   /////////////////////////////////////////////////////////////////////////////
-  public static int AddFactsDischarge(DBCon dbcon,List<Long> pids,FactList flist,int verbose)
+  public static int AddFactsDischarge(DBCon dbcon, List<Long> pids, FactList flist, int verbose)
         throws SQLException
   {
     String pids_str="";
@@ -645,7 +644,7 @@ public class hf_utils
     while (rset.next())
     {
       java.util.Date date = rset.getDate("date");
-      Fact f = new Fact(date,Fact.TYPE_DISCHARGE);
+      Fact f = new Fact(date, Fact.TYPE_DISCHARGE);
       f.setEncounterId(rset.getLong("encounter_id"));
       f.setPatientId(rset.getLong("patient_id"));
       f.setPatientTypeId(rset.getShort("patient_type_id"));

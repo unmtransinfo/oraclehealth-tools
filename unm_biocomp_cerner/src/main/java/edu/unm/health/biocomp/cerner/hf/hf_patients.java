@@ -22,7 +22,7 @@ public class hf_patients
   private static String DBUSR="jjyang";
   private static String DBP=null;
 
-  private static int NMAX=10000;
+  private static Integer NMAX=null;
   private static String ftype="all";
 
   /////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ public class hf_patients
       +"    -o OFILE ............... output file (CSV)\n"
       +"\n"
       +"  patient selection:\n"
-      +"    -nmax NMAX ............. patient limit ["+NMAX+"]\n"
+      +"    -nmax NMAX ............. patient limit [None]\n"
       +"    -skip SKIP ............. skip 1st SKIP patients (from input file only)\n"
       +"    -random ................ random selection (from db only)\n"
       +"    -skfile SKFILE ......... input SK IDs (else sample all)\n"
