@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# Define DBNAME, DBHOST, DBPORT, TUNNELPORT
+# Define DBNAME, DBHOST, DBPORT, maybe TUNNELPORT
 . ~/.healthfactsrc
 #
 #
@@ -61,17 +61,23 @@ if [ $OP = "query" -a ! "$SQL" -a ! "$SQLFILE" ]; then
 	help
 fi
 #
-args="-dbhost localhost -dbport $TUNNELPORT -dbname $DBNAME"
+if [ "$TUNNELPORT" ]; then
+	args="-dbhost localhost -dbport $TUNNELPORT -dbname $DBNAME"
+else
+	args="-dbhost localhost -dbport $DBPORT -dbname $DBNAME"
+fi
 #
 if [ "$VERBOSE" ]; then
 	args="$args -v"
 fi
 ###
-ssh -T -O "check" $DBHOST
-rval="$?"
-#
-if [ "$rval" -ne 0 ]; then
-	ssh -f -N -T -M -4 -L ${TUNNELPORT}:localhost:${DBPORT} $DBHOST
+if [ "$TUNNELPORT" ]; then
+	ssh -T -O "check" $DBHOST
+	rval="$?"
+	#
+	if [ "$rval" -ne 0 ]; then
+		ssh -f -N -T -M -4 -L ${TUNNELPORT}:localhost:${DBPORT} $DBHOST
+	fi
 fi
 #
 if [ $OP = "info" ]; then
@@ -93,7 +99,10 @@ set -x
 #
 mvn --projects unm_biocomp_cerner exec:java  \
 	-Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_query" \
+	-Dexec.cleanupDaemonThreads=false \
 	-Dexec.args="${args}"
 #
-#ssh -T -O "exit" $DBHOST
+#if [ "$TUNNELPORT" ]; then
+#	ssh -T -O "exit" $DBHOST
+#fi
 #

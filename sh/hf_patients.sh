@@ -18,7 +18,10 @@ if [ "${TUNNELPORT}" ]; then
 	fi
 fi
 #
-mvn --projects unm_biocomp_cerner exec:java -Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_patients" -Dexec.args="-dbname $DBNAME $*"
+mvn --projects unm_biocomp_cerner exec:java \
+	-Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_patients" \
+	-Dexec.cleanupDaemonThreads=false \
+	-Dexec.args="-dbname $DBNAME $*"
 #
 #if [ "${TUNNELPORT}" ]; then
 #	ssh -T -O "exit" $DBHOST
