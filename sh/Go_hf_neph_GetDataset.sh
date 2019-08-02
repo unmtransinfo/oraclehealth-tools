@@ -50,7 +50,6 @@ for ftype in $ftypes ; do
 		-skfile ${DATADIR}/${prefix}.sk \
 		-ftype "${ftype}" \
 		-o ${DATADIR}/${prefix}_f_${ftype}.tsv \
-		-nmax 50000 \
 		-vv
 done
 #
