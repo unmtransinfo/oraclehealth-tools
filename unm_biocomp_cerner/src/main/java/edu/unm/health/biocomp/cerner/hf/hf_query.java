@@ -13,12 +13,11 @@ import edu.unm.health.biocomp.util.db.*; //DBCon
 */
 public class hf_query
 {
-  //Postgresql (via tunnel):
   private static String DBHOST="localhost";
   private static String DBNAME="healthfacts";
-  private static Integer DBPORT=63333;
+  private static Integer DBPORT=5432;
 
-  private static String DBUSR="jjyang";
+  private static String DBUSR=System.getenv("USER");
   private static String DBP=null;
 
   /////////////////////////////////////////////////////////////////////////////
@@ -98,17 +97,12 @@ public class hf_query
     ParseCommand(args);
     if (query && sql==null && sqlfile==null)
       Help("-query requires -sql or -sqlfile.");
-
     java.util.Date t_0 = new java.util.Date();
-
     DBCon dbcon = null;
-
     try {
-      //dbcon = new DBCon("microsoft",DBHOST,DBPORT,DBNAME,DBUSR,P(DBP));
-      dbcon = new DBCon("postgres",DBHOST,DBPORT,DBNAME,DBUSR,DBP);
+      dbcon = new DBCon("postgres", DBHOST, DBPORT, DBNAME, DBUSR, DBP);
     }
     catch (SQLException e) { Help("Connection failed:"+e.getMessage()); }
-
     if (sqlfile!=null)
     {
       BufferedReader br = new BufferedReader(new FileReader(new File(sqlfile)));
@@ -117,13 +111,11 @@ public class hf_query
         sql+=(line+"\n");
       br.close();
     }
-
     OutputStream ostream=null;
     if (ofile!=null)
       ostream = new FileOutputStream(new File(ofile),false);
     else
       ostream = ((OutputStream)System.out);
-
     if (test)
     {
       System.err.println(dbcon.serverStatusTxt());
@@ -151,7 +143,6 @@ public class hf_query
     }
     else
       Help("No operation specified.");
-
     System.err.println("elapsed time: "+time_utils.TimeDeltaStr(t_0,new java.util.Date()));
   }
 }

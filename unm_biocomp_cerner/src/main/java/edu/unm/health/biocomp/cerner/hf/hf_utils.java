@@ -23,11 +23,6 @@ public class hf_utils
     String txt=meta.getDatabaseProductName()
       +" "+meta.getDatabaseMajorVersion()+"."+meta.getDatabaseMinorVersion()+" ("
       +meta.getDriverName()+" "+meta.getDriverVersion()+")";
-    //ResultSet rset;
-    //rset=dbcon.executeSql("SELECT count(*) FROM hf_f_encounter");
-    //if (rset.next())
-    //  txt+=("total encounters: "+rset.getString(1)+"\n");
-    //rset.getStatement().close();
     return txt;
   }
   /////////////////////////////////////////////////////////////////////////////
@@ -147,7 +142,6 @@ public class hf_utils
     PrintWriter fout_writer=new PrintWriter(new OutputStreamWriter(ostream));
     java.util.Date t_0 = new java.util.Date();
 
-    //PatientList plist = new PatientList();
     int i_sk=0; //index into list
     long n_sk=0L; //# processed
     fout_writer.println("SK,PID,EID,Ftype,FID,PtypeID,Page,HospID,Result,Units,Date"); //11 fields
@@ -194,7 +188,6 @@ public class hf_utils
           fout_writer.flush();
         }
       }
-      //plist.add(p);
       if (verbose>2)
         System.err.println("\tt_this: "+time_utils.TimeDeltaStr(t_0_this,new java.util.Date()));
       if (nmax!=null && ++n_sk>=nmax) break;
@@ -204,7 +197,6 @@ public class hf_utils
       }
     }
     fout_writer.close();
-    //return plist;
   }
   /////////////////////////////////////////////////////////////////////////////
   /**	Parse fact type string to fact type int.
@@ -302,7 +294,6 @@ public class hf_utils
     else if (dbcon.getDBType().equalsIgnoreCase("postgres"))
       sql+="dd.diagnosis_code SIMILAR TO '\\d\\d\\d\\.%'\nAND ";
     sql+="fe.patient_id IN ("+pids_str+")";
-    //if (verbose>2) System.err.println("DEBUG: sql: "+sql);
     ResultSet rset=dbcon.executeSql(sql);
     int n_fact=0;
     while (rset.next())
@@ -349,7 +340,6 @@ public class hf_utils
               +"hf_d_medication dm ON fm.medication_id = dm.medication_id\n"
       +"WHERE\n"
               +"fe.patient_id IN ("+pids_str+")";
-    //if (verbose>2) System.err.println("DEBUG: sql: "+sql);
     ResultSet rset=dbcon.executeSql(sql);
     int n_fact=0;
     while (rset.next())
@@ -397,7 +387,6 @@ public class hf_utils
               +"hf_d_med_product dmp ON fmh.med_product_id = dmp.med_product_id\n"
       +"WHERE\n"
               +"fe.patient_id IN ("+pids_str+")";
-    //if (verbose>2) System.err.println("DEBUG: sql: "+sql);
     ResultSet rset=dbcon.executeSql(sql);
     int n_fact=0;
     while (rset.next())
@@ -453,7 +442,6 @@ public class hf_utils
              +"hf_d_lab_procedure dlp ON dlp.lab_procedure_id = flp.detail_lab_procedure_id\n"
       +"WHERE\n"
              +"fe.patient_id IN ("+pids_str+")";
-    //if (verbose>2) System.err.println("DEBUG: sql: "+sql);
     ResultSet rset=dbcon.executeSql(sql);
     int n_fact=0;
     while (rset.next())

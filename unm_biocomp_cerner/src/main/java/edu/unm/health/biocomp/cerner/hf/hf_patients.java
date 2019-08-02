@@ -14,12 +14,11 @@ import edu.unm.health.biocomp.util.db.*;
 */
 public class hf_patients
 {
-  //Postgresql (via tunnel):
   private static String DBHOST="localhost";
   private static String DBNAME="healthfacts";
-  private static Integer DBPORT=63333;
+  private static Integer DBPORT=5432;
 
-  private static String DBUSR="jjyang";
+  private static String DBUSR=System.getenv("USER");
   private static String DBP=null;
 
   private static Integer NMAX=null;
@@ -125,8 +124,7 @@ public class hf_patients
     java.util.Date t_0 = new java.util.Date();
     DBCon dbcon = null;
     try {
-      //dbcon = new DBCon("microsoft",DBHOST,DBPORT,DBNAME,DBUSR,P(DBP));
-      dbcon = new DBCon("postgres",DBHOST,DBPORT,DBNAME,DBUSR,DBP);
+      dbcon = new DBCon("postgres", DBHOST, DBPORT, DBNAME, DBUSR, DBP);
     }
     catch (SQLException e) { Help("Connection failed:"+e.getMessage()); }
 
@@ -177,7 +175,6 @@ public class hf_patients
     else
     {
       sks = hf_utils.GetPatientSkList(dbcon, random, NMAX);
-      //System.err.println("DEBUG: patient_sk count: "+sks.size()+(" (elapsed time: "+time_utils.TimeDeltaStr(t_0,new java.util.Date())+")"));
     }
     System.err.println("patient_sk count: "+sks.size());
 
