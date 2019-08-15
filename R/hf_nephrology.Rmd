@@ -1,0 +1,65 @@
+---
+title: "Nephrology Cohort Analysis-Ready Dataset, from Cerner HealthFacts"
+author: "Jeremy Yang"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+---
+
+# Introduction
+
+A cohort of patients has been identified by searching based on several
+ICD-9 and ICD-10 diagnostic codes, where "kidney" is in the `diagnosis_description`.
+A random 1% sample of data from 2013-2017 results in 75894 `patient_sk`'s and
+80459 `patient_id`'s.  From these patients we extract encounter data for 
+specific fact types:
+
+* `DIAGNOSIS`
+* `LAB_PROCEDURE`
+* `MEDICATION`
+
+Not obtained but also available:
+
+* `CLINICAL_EVENT`
+* `IMPLANT_LOG`
+* `MED_HISTORY`
+* `MICROBIOLOGY`
+* `MICRO_SUSCEPTIBILITY`
+* `PROCEDURE`
+* `SURGICAL_CASE`
+* `SURGICAL_PROCEDURE`
+* `DISCHARGE`
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE)
+base::date()
+```
+
+```{r message=FALSE, warning=FALSE}
+library(readr, quietly=T)
+library(data.table, quietly=T)
+library(plotly, quietly=T)
+```
+
+# Read files
+
+
+```{r}
+cohort <- read_delim("data/hf_neph_cohort.tsv", "\t", col_types=cols(.default=col_character(), age_in_years=col_integer()))
+setDT(cohort)
+knitr::kable(cohort[, .(.N), by="gender"])
+knitr::kable(cohort[, .(.N), by="race"])
+```
+
+```{r}
+plot_ly(type="histogram", data=cohort, x=~age_in_years) %>%
+  layout(title="Patient Age")
+```
+
+```{r}
+dia <- read_delim("data/hf_neph_cohort_f_diagnosis.tsv", ",", col_types=cols(.default=col_character()))
+lab <- read_delim("data/hf_neph_cohort_f_lab.tsv", ",", col_types=cols(.default=col_character()))
+med <- read_delim("data/hf_neph_cohort_f_medication.tsv", ",", col_types=cols(.default=col_character()))
+```
+
