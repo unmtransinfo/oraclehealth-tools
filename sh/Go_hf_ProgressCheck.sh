@@ -11,6 +11,7 @@ ftypes="diagnosis lab medication"
 n_sk=$(ssh $DBHOST cat $DATADIR/hf_neph_cohort.sk |wc -l)
 #
 for ftype in $ftypes ; do
+	echo "${DBHOST}:${DATADIR}/hf_neph_cohort_f_${ftype}.tsv"
 	n=$(ssh $DBHOST cat $DATADIR/hf_neph_cohort_f_${ftype}.tsv |sed -e 's/,.*$//' |sort -u |wc -l)
 	printf "Nephrology patient PKs done (facttype: $ftype): %d / %d (%d%%)\n" \
 		"$n" \

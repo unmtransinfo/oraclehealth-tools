@@ -1,17 +1,12 @@
 #!/bin/sh
 #
 DBHOST=""
-DBPORT=""
+DBPORT="5432"
 DBTNLPORT=""
-DBTNLHOST=""
+DBTNLHOST="localhost"
 DBNAME=""
+DBUSR="$USER"
 #
-#
-if [ -e ".runsql_pg" ]; then
-	. .runsql_pg
-else
-	echo "Not found: .runsql_pg"
-fi
 #
 PSQL="psql"
 #
@@ -25,28 +20,22 @@ help() {
 	echo "        -q QUERY ....... SQL"
 	echo ""
 	echo "  parameters:"
-	echo "        -n NAME ........ db name [$DBNAME]"
-	echo "        -h HOST ........ db host [$DBHOST]"
-	echo "        -z PORT ........ db port [$DBPORT]"
-	echo "        -x TNLPORT ..... db tunnel port [$DBTNLPORT]"
-	echo "        -y TNLHOST ..... db tunnel host [$DBTNLHOST]"
-	echo "        -u USR ......... db user [$DBUSR]"
-	echo "        -p PW .......... db password"
+	echo "        -n DBNAME ........ db name [$DBNAME]"
+	echo "        -h DBHOST ........ db host [$DBHOST]"
+	echo "        -z DBPORT ........ db port [$DBPORT]"
+	echo "        -x DBTNLPORT ..... db tunnel port [$DBTNLPORT]"
+	echo "        -y DBTNLHOST ..... db tunnel host [$DBTNLHOST]"
+	echo "        -u DBUSR ......... db user [$DBUSR]"
+	echo "        -p DBPW .......... db password"
 	echo "  options:"
-	echo "        -c ............. CSV output"
-	echo "        -v ............. verbose"
+	echo "        -t ............. TSV output (STDOUT)"
+	echo "        -v ............. verbose (STDERR)"
 	echo ""
 	echo "$PSQL version: `$PSQL -V`"
 	exit 1
 }
 #
-if [ $# -eq 0 ]; then
-	help "ERROR: SQL input required."
-elif [ ! "$DBHOST" -o ! "$DBNAME" ]; then
-	help "ERROR: DB specification required."
-fi
-#
-CSV=""
+TSV=""
 VERBOSE=""
 ### Parse options
 while getopts f:q:n:h:z:x:y:u:p:o:ctv opt ; do
@@ -61,12 +50,19 @@ while getopts f:q:n:h:z:x:y:u:p:o:ctv opt ; do
 	y)      DBTNLHOST=$OPTARG ;;
 	u)      DBUSR=$OPTARG ;;
 	p)      DBPW=$OPTARG ;;
-	c)      CSV="TRUE" ;;
+	t)      TSV="TRUE" ;;
 	v)      VERBOSE="TRUE" ;;
 	\?)     help
 		exit 1 ;;
 	esac
 done
+#
+#
+if [ $# -eq 0 ]; then
+	help "ERROR: SQL input required."
+elif [ ! "$DBHOST" -o ! "$DBNAME" ]; then
+	help "ERROR: DB specification required."
+fi
 #
 if [ ! "$SQL" -a ! "$SQLFILE" ]; then
 	echo "-f or -q required."
@@ -77,7 +73,7 @@ DBOPTS="-At"
 #
 TMPSQLFILE="/tmp/`basename ${0}`.sql"
 #
-if [ "$CSV" ]; then
+if [ "$TSV" ]; then
 	rm -f $TMPSQLFILE
 	echo "COPY (" >$TMPSQLFILE
 	if [ "$SQLFILE" ]; then
@@ -85,7 +81,7 @@ if [ "$CSV" ]; then
 	else
 		echo "$SQL" |sed -e 's/; *$//' >>$TMPSQLFILE
 	fi
-	echo ") TO STDOUT WITH (FORMAT CSV,HEADER,DELIMITER ',',QUOTE '\"')" >>$TMPSQLFILE
+	echo ") TO STDOUT WITH (FORMAT CSV,HEADER,DELIMITER '	',QUOTE '\"')" >>$TMPSQLFILE
 	SQLFILE=$TMPSQLFILE
 	DBOPTS="-qA"
 else
@@ -98,8 +94,11 @@ ssh -T -O "check" $DBHOST
 rval="$?"
 #
 if [ "$rval" -ne 0 ]; then
+	if [ ! "$DBTNLHOST" -o ! "$DBTNLPORT" -o ! "$DBPORT" ]; then
+		help "ERROR: DBTNLHOST, DBTNLPORT, and DBPORT required for ssh tunnel."
+	fi
 	if [ "$VERBOSE" ]; then
-		echo "Starting ssh tunnel..."
+		echo "Starting ssh tunnel..." 1>&2
 	fi
 	ssh -f -N -T -M -4 -L ${DBTNLPORT}:${DBTNLHOST}:${DBPORT} $DBHOST
 	ssh -T -O "check" $DBHOST

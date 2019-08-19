@@ -1,5 +1,5 @@
 ---
-title: "Nephrology Cohort Analysis-Ready Dataset, from Cerner HealthFacts"
+title: "Kidney Disease Cohort Analysis-Ready Dataset, from Cerner HealthFacts"
 author: "Jeremy Yang"
 output:
   html_document:
@@ -42,24 +42,184 @@ library(data.table, quietly=T)
 library(plotly, quietly=T)
 ```
 
-# Read files
+# Cohort selection and description
 
+## Exclusions:
+- ICD9: E* = Injury to kidney
+- ICD9: O* = Tuberculosis or Syphillis of kidney
+- ICD9: V* = Family History or Kidney Transplant
+- ICD9: 866.* = Injury to Kidney
+- ICD9: 966.81 = Complications of Transplanted Kidney
+- ICD10-CM: E* = Diabetes with kidney complications
+- ICD10-CM: O* = Pregnancy-related kidney complications
+- ICD10-CM: R* = Radiologic findings
+- ICD10-CM: S* = Injury to kidney
+- ICD10-CM: T* = Complication following kidney dialysis or transplant
+- ICD10-CM: Y* = Complications of dialysis, etc.
+- ICD10-CM: Z* = Complications of transplant, etc.
 
-```{r}
-cohort <- read_delim("data/hf_neph_cohort.tsv", "\t", col_types=cols(.default=col_character(), age_in_years=col_integer()))
-setDT(cohort)
-knitr::kable(cohort[, .(.N), by="gender"])
-knitr::kable(cohort[, .(.N), by="race"])
+### SQL:
+
+```
+SELECT
+  dp.patient_id,
+  dp.patient_sk,
+  dp.gender,
+  dp.race,
+  fe.age_in_years,
+  fe.patient_type_id,
+  fe.hospital_id,
+  dd.diagnosis_code,
+  dd.diagnosis_type,
+  fe.admitted_dt_tm AS dx_date
+FROM
+  hf_d_patient dp
+JOIN
+  hf_f_encounter fe ON dp.patient_id = fe.patient_id
+JOIN
+  hf_f_diagnosis fd1 ON fd1.encounter_id = fe.encounter_id
+JOIN
+  hf_d_diagnosis dd ON fd1.diagnosis_id = dd.diagnosis_id
+WHERE
+  EXTRACT(YEAR FROM fe.admitted_dt_tm) BETWEEN 2013 AND 2017
+  AND dd.diagnosis_id IN
+  ( SELECT
+    diagnosis_id
+  FROM
+    hf_d_diagnosis
+  WHERE
+    dd.diagnosis_description ILIKE '%kidney%'
+    AND NOT (dd.diagnosis_type = 'ICD9' AND (dd.diagnosis_code ~ '^[EOV]' OR dd.diagnosis_code ~ '^(866|996)'))
+    AND NOT (dd.diagnosis_type = 'ICD10-CM' AND dd.diagnosis_code ~ '^[EORSTYZ]')
+  )
+  AND RANDOM() < 0.01
+  ;
 ```
 
+```{r warning=FALSE}
+icd_neph <- read_delim("data/hf_neph_codes.tsv", "\t", col_types=cols(.default=col_character()))
+setDT(icd_neph)
+cohort <- read_delim("data/hf_neph_cohort.tsv", "\t", col_types=cols(.default=col_character(), age_in_years=col_integer()))
+setDT(cohort)
+message(sprintf("Total (1%% sample): %d; Estimated full total: %g", nrow(cohort), 100*nrow(cohort)))
+```
+
+## Cohort by gender
+
 ```{r}
-plot_ly(type="histogram", data=cohort, x=~age_in_years) %>%
-  layout(title="Patient Age")
+knitr::kable(cohort[, .(.N, Percent=round(100.0*.N/nrow(cohort), 2)), by="gender"], caption="Cohort by gender")
+```
+
+## Cohort by race
+
+```{r}
+ax0 <- list(showline=F, zeroline=F, showticklabels=F, showgrid=F)
+plot_ly(type="pie", hole = 0.5, data=cohort[, .(.N), by="race"], values=~N, labels=~race ) %>%
+  layout(title=paste0("Cohort by race"), 
+         xaxis=ax0, yaxis=ax0, showlegend=T, margin=list(t=120), legend=list(x=0.8, y=0.5),
+         font=list(family="monospace", size=18))
+```
+
+## Cohort age
+
+```{r}
+plot_ly(type="histogram", data=cohort[!is.na(age_in_years)], x=~age_in_years)  %>%
+  layout(title=paste0("Cohort age in years"), 
+         showlegend=F, margin=list(t=120),
+         font=list(family="monospace", size=18))
+```
+
+
+## Qualifying diagnoses
+
+The dx facts file contains ___all___ dx for the cohort, but first consider their qualifying
+kidney disease dx.
+
+### SQL:
+
+```
+SELECT DISTINCT
+  dd.diagnosis_id,
+  dd.diagnosis_code,
+  dd.diagnosis_type,
+  dd.diagnosis_description,
+  fe.encounter_id,
+  fe.patient_id,
+  fe.patient_type_id,
+  fe.age_in_years,
+  fe.hospital_id,
+  fe.admitted_dt_tm AS date
+FROM
+  hf_f_diagnosis fd
+JOIN
+  hf_f_encounter fe ON fd.encounter_id = fe.encounter_id
+JOIN
+  hf_d_diagnosis dd ON fd.diagnosis_id = dd.diagnosis_id
+JOIN
+  hf_d_diagnosis_type ddt ON fd.diagnosis_type_id = ddt.diagnosis_type_id
+WHERE
+  fe.patient_id IN (...)
+  ;
 ```
 
 ```{r}
 dia <- read_delim("data/hf_neph_cohort_f_diagnosis.tsv", ",", col_types=cols(.default=col_character()))
-lab <- read_delim("data/hf_neph_cohort_f_lab.tsv", ",", col_types=cols(.default=col_character()))
-med <- read_delim("data/hf_neph_cohort_f_medication.tsv", ",", col_types=cols(.default=col_character()))
+setDT(dia)
+dia[, `:=`(Ftype=NULL, Result=NULL, Units=NULL, Page=NULL, PtypeID=NULL)]
+setnames(dia, old="FID", new="diagnosis_id")
+message(sprintf("Percent of SKs in Dx facts file: %.1f%%", 100*uniqueN(dia[, SK])/uniqueN(cohort[, patient_sk])))
+dx_counts <- dia[, .(N_dx = .N, N_pt=uniqueN(SK)), by="diagnosis_id"]
+dx_counts <- merge(dx_counts, icd_neph, by="diagnosis_id", all.x=F, all.y=T)
+set(dx_counts, which(is.na(dx_counts[, N_dx])), "N_dx", value=0)
+setorder(dx_counts, -N_dx)
+knitr::kable(dx_counts[1:20, .(Dx=paste(diagnosis_type, diagnosis_code, ":"), diagnosis_description, N_dx, N_pt)])
+```
+
+
+## Co-morbidity
+
+Other dx. Some may be criteria for exclusion.
+
+```{r}
+icd <- read_delim("data/hf_d_diagnosis.tsv", "\t", col_types=cols(.default=col_character()))
+setDT(icd)
+codx_counts <- dia[, .(N_dx = .N, N_pt=uniqueN(SK)), by="diagnosis_id"]
+codx_counts <- merge(codx_counts, icd, by="diagnosis_id", all.x=F, all.y=T)
+codx_counts <- codx_counts[!(diagnosis_id %in% icd_neph$diagnosis_id)]
+set(codx_counts, which(is.na(codx_counts[, N_dx])), "N_dx", value=0)
+setorder(codx_counts, -N_dx)
+knitr::kable(codx_counts[1:20, .(Dx=paste(diagnosis_type, diagnosis_code, ":"), diagnosis_description, N_dx, N_pt)])
+```
+
+## Facts: Lab Procedures
+
+```{r warning=FALSE}
+lab <- read_delim("data/hf_neph_cohort_f_lab.tsv", ",", col_types=cols(.default=col_character(), Date=col_date()))
+setnames(lab, old="FID", new="lab_procedure_id")
+setDT(lab)
+lab[, `:=`(Ftype=NULL, Page=NULL, PtypeID=NULL, Result=NULL, Units=NULL)]
+loinc <- read_delim("data/hf_d_lab_procedure.tsv", "\t", col_types=cols(.default=col_character()))
+setDT(loinc)
+lab_counts <- lab[, .(N_lab = .N, N_pt=uniqueN(SK)), by="lab_procedure_id"]
+lab_counts <- merge(lab_counts, loinc, by="lab_procedure_id", all.x=T, all.y=F)
+setorder(lab_counts, -N_lab)
+knitr::kable(lab_counts[1:20, .(lab_procedure_name, lab_super_group, N_lab, N_pt)])
+```
+
+
+
+## Facts: Medications
+
+```{r warning=FALSE}
+med <- read_delim("data/hf_neph_cohort_f_medication.tsv", ",", col_types=cols(.default=col_character(), Date=col_date()))
+setnames(med, old="FID", new="medication_id")
+setDT(med)
+med[, `:=`(Ftype=NULL, Page=NULL, PtypeID=NULL)]
+ndc <- read_delim("data/hf_d_medication.tsv", "\t", col_types=cols(.default=col_character()))
+setDT(ndc)
+med_counts <- med[, .(N_med = .N, N_pt=uniqueN(SK)), by="medication_id"]
+med_counts <- merge(med_counts, ndc, by="medication_id", all.x=T, all.y=F)
+setorder(med_counts, -N_med)
+knitr::kable(med_counts[1:50, .(ndc_code, brand_name, generic_name, route_description, dose_form_description, N_med, N_pt)])
 ```
 

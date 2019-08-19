@@ -1,5 +1,19 @@
 -- Health Facts Diagnoses
--- Diabetes Codes: all kidney diseases, ICD9 and ICD10
+-- Diabetes Codes: all kidney diseases, ICD9 and ICD10-CM
+--
+-- Exclusions:
+-- ICD9: E* = Injury to kidney
+-- ICD9: O* = Tuberculosis or Syphillis of kidney
+-- ICD9: V* = Family History or Kidney Transplant
+-- ICD9: 866.* = Injury to Kidney
+-- ICD9: 966.81 = Complications of Transplanted Kidney
+-- ICD10-CM: E* = Diabetes with kidney complications
+-- ICD10-CM: O* = Pregnancy-related kidney complications
+-- ICD10-CM: R* = Radiologic findings
+-- ICD10-CM: S* = Injury to kidney
+-- ICD10-CM: T* = Complication following kidney dialysis or transplant
+-- ICD10-CM: Y* = Complications of dialysis, etc.
+-- ICD10-CM: Z* = Complications of transplant, etc.
 --
 SELECT
 	dd.diagnosis_id,
@@ -11,7 +25,7 @@ FROM
 WHERE
 	dd.diagnosis_description ILIKE '%kidney%'
 	AND NOT (dd.diagnosis_type = 'ICD9' AND (dd.diagnosis_code ~ '^[EOV]' OR dd.diagnosis_code ~ '^(866|996)' ))
-	AND NOT (dd.diagnosis_type = 'ICD10-CM' AND dd.diagnosis_code ~ '^[EORSTZ]')
+	AND NOT (dd.diagnosis_type = 'ICD10-CM' AND dd.diagnosis_code ~ '^[EORSTYZ]')
 ORDER BY
 	dd.diagnosis_type,
 	dd.diagnosis_code
