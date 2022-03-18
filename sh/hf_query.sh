@@ -9,10 +9,9 @@ help() {
 	echo "$1"
 	echo "syntax: `basename $0` [options]"
 	echo ""
-	echo "  operation:"
-	echo "        -i .............. dbinfo"
-	echo ""
 	echo "  required:"
+	echo "        -i .............. dbinfo"
+	echo "  or"
 	echo "        -f FILE ......... SQL file"
 	echo "  or"
 	echo "        -q QUERY ........ SQL"
@@ -57,7 +56,7 @@ while getopts "f:q:h:p:n:t:o:iv" opt ; do
 done
 #
 if [ $OP = "query" -a ! "$SQL" -a ! "$SQLFILE" ]; then
-	echo "-f or -q required."
+	echo "Query requires -f or -q."
 	help
 fi
 #
@@ -81,14 +80,12 @@ if [ "$TUNNELPORT" ]; then
 fi
 #
 if [ $OP = "info" ]; then
-	#args="$args -info"
-	args="$args -list_tables"
+	args="$args -i"
 elif [ $OP = "query" ]; then
-	args="$args -query"
 	if [ "$SQLFILE" ]; then
-		args="$args -sqlfile $SQLFILE"
+		args="$args -query -sqlfile $SQLFILE"
 	elif [ "$SQL" ]; then
-		args="$args -sql \"$SQL\""
+		args="$args -query -sql \"$SQL\""
 	fi
 	if [ "$OFILE" ]; then
 		args="$args -o $OFILE"
