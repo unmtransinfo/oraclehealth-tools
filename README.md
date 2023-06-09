@@ -86,7 +86,7 @@ FTYPES:
 mvn javadoc:javadoc
 ```
 
- * [JavaDoc](doc/javadoc/)
+ * [JavaDoc (API docs)](doc/javadoc/)
 
 ## UNM Cerner HealthFacts paper:
 
