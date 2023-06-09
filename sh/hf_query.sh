@@ -62,8 +62,10 @@ fi
 #
 if [ "$TUNNELPORT" ]; then
 	args="-dbhost localhost -dbport $TUNNELPORT -dbname $DBNAME"
+	print "Test db connection with: psql -h localhost -d $DBNAME -p $TUNNELPORT" 
 else
-	args="-dbhost localhost -dbport $DBPORT -dbname $DBNAME"
+	args="-dbhost $DBHOST -dbport $DBPORT -dbname $DBNAME"
+	print "Test db connection with: psql -h $DBHOST -d $DBNAME -p $DBPORT"
 fi
 #
 if [ "$VERBOSE" ]; then
@@ -71,7 +73,7 @@ if [ "$VERBOSE" ]; then
 fi
 ###
 if [ "$TUNNELPORT" ]; then
-	ssh -T -O "check" $DBHOST
+	ssh -M -T -O "check" $DBHOST
 	rval="$?"
 	#
 	if [ "$rval" -ne 0 ]; then
@@ -92,14 +94,21 @@ elif [ $OP = "query" ]; then
 	fi
 fi
 #
+#
 set -x
 #
-mvn --projects unm_biocomp_cerner exec:java  \
-	-Dexec.mainClass="edu.unm.health.biocomp.cerner.hf.hf_query" \
-	-Dexec.cleanupDaemonThreads=false \
-	-Dexec.args="${args}"
+LIBDIR=$(cd $HOME/../app/lib; pwd)
 #
-#if [ "$TUNNELPORT" ]; then
-#	ssh -T -O "exit" $DBHOST
-#fi
+java \
+	-classpath $LIBDIR/unm_biocomp_cerner-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+	edu.unm.health.biocomp.cerner.hf.hf_query \
+	${args}
+#
+###
+# Note for patient cohort query instead use class:
+#	edu.unm.health.biocomp.cerner.hf.hf_patients
+#
+if [ "$TUNNELPORT" ]; then
+	ssh -M -T -O "exit" $DBHOST
+fi
 #
