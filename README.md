@@ -29,10 +29,10 @@ usage: hf_query [options]
     -sql SQL ............... 
     -o OFILE ............... output file (CSV)
   options:
-    -dbhost DBHOST ......... [localhost]
-    -dbport DBPORT ......... [5432] 
-    -dbname DBNAME ......... [healthfacts] 
-    -dbusr DBUSR ........... [jjyang] 
+    -dbhost DBHOST ......... [*********]
+    -dbport DBPORT ......... [****] 
+    -dbname DBNAME ......... [***********] 
+    -dbusr DBUSR ........... [******] 
     -dbpw DBPW ............. [********]
     -v[v] .................. verbose [very]
     -h ..................... this help
@@ -61,10 +61,10 @@ usage: hf_patients [options]
     -ftype FTYPE ........... [all]
 
   options:
-    -dbhost DBHOST ......... [localhost]
-    -dbport DBPORT ......... [5432] 
-    -dbname DBNAME ......... [healthfacts] 
-    -dbusr DBUSR ........... [jjyang] 
+    -dbhost DBHOST ......... [*********]
+    -dbport DBPORT ......... [****] 
+    -dbname DBNAME ......... [***********] 
+    -dbusr DBUSR ........... [******] 
     -dbpw DBPW ............. [********]
     -v[v[v]] ............... verbose [very [very]]
     -h ..................... this help
